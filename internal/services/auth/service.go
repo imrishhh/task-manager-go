@@ -1,4 +1,4 @@
-package authservice
+package auth
 
 import (
 	"context"
@@ -6,21 +6,21 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/nullrish/task-manager-go/internal/middleware/jwt"
-	models "github.com/nullrish/task-manager-go/internal/models/user_model"
-	repo "github.com/nullrish/task-manager-go/internal/repositories/user_repository"
+	userModel "github.com/nullrish/task-manager-go/internal/models/user"
+	"github.com/nullrish/task-manager-go/internal/repositories/user"
 	"github.com/nullrish/task-manager-go/internal/util/hashing"
 	"github.com/nullrish/task-manager-go/internal/util/validator"
 )
 
 type Service struct {
-	repo repo.UserRepository
+	repo user.UserRepository
 }
 
-func NewAuthService(repo repo.UserRepository) *Service {
+func NewService(repo user.UserRepository) *Service {
 	return &Service{repo}
 }
 
-func (s *Service) RegisterUser(ctx context.Context, user *models.UserRequest) error {
+func (s *Service) RegisterUser(ctx context.Context, user *userModel.UserRequest) error {
 	// If fields are empty then return error of missing field
 	if user.Username == "" || user.Email == "" || user.Password == "" {
 		return errors.New("missing fields required")
@@ -57,13 +57,13 @@ func (s *Service) RegisterUser(ctx context.Context, user *models.UserRequest) er
 	return s.repo.CreateUser(ctx, user)
 }
 
-func (s *Service) LoginUser(ctx context.Context, user *models.UserRequest) (string, error) {
+func (s *Service) LoginUser(ctx context.Context, user *userModel.UserRequest) (string, error) {
 	// If fields are empty then return error of missing field
 	if user.Username == "" && user.Email == "" {
 		return "", errors.New("enter username and email")
 	}
 
-	var u *models.User
+	var u *userModel.User
 	var err error
 	if user.Email != "" {
 		u, err = s.repo.GetUserByEmail(ctx, user.Email)

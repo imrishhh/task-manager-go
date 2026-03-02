@@ -1,22 +1,22 @@
-package authhandler
+package auth
 
 import (
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
-	usermodel "github.com/nullrish/task-manager-go/internal/models/user_model"
-	authservice "github.com/nullrish/task-manager-go/internal/services/auth_service"
+	userModel "github.com/nullrish/task-manager-go/internal/models/user"
+	authService "github.com/nullrish/task-manager-go/internal/services/auth"
 )
 
 type Handler struct {
-	s *authservice.Service
+	s *authService.Service
 }
 
-func NewHandler(s *authservice.Service) *Handler {
+func NewHandler(s *authService.Service) *Handler {
 	return &Handler{s}
 }
 
 func (h *Handler) RegisterUser(c fiber.Ctx) error {
-	user := new(usermodel.UserRequest)
+	user := new(userModel.UserRequest)
 	if err := c.Bind().Body(user); err != nil {
 		return err
 	}
@@ -28,7 +28,7 @@ func (h *Handler) RegisterUser(c fiber.Ctx) error {
 }
 
 func (h *Handler) LoginUser(c fiber.Ctx) error {
-	user := new(usermodel.UserRequest)
+	user := new(userModel.UserRequest)
 	if err := c.Bind().Body(user); err != nil {
 		return err
 	}

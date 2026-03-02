@@ -5,21 +5,21 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 	"github.com/nullrish/task-manager-go/internal/middleware/jwt"
-	authrouter "github.com/nullrish/task-manager-go/internal/router/auth_router"
+	"github.com/nullrish/task-manager-go/internal/router/auth"
 )
 
 func ConfigureRoutes(app *fiber.App, db *sql.DB) {
 	api := app.Group("/api")
 
-	auth := api.Group("/auth")
+	r := api.Group("/auth")
 
-	authrouter.ConfigureAuthRoutes(auth, db)
+	auth.ConfigureAuthRoutes(r, db)
 
 	// Configure JWT middleware here
 	app.Use(jwt.Middleware())
 
 	// Test JWT middleware restriction without Authorization Header
-	auth.Get("/restricted", func(c fiber.Ctx) error {
+	r.Get("/restricted", func(c fiber.Ctx) error {
 		return c.SendString("This one is restricted")
 	})
 }

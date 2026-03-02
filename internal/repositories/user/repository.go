@@ -1,4 +1,4 @@
-package userrepository
+package user
 
 import (
 	"context"
@@ -6,14 +6,14 @@ import (
 
 	"github.com/google/uuid"
 
-	models "github.com/nullrish/task-manager-go/internal/models/user_model"
+	userModel "github.com/nullrish/task-manager-go/internal/models/user"
 )
 
 type UserRepository interface {
-	CreateUser(ctx context.Context, user *models.UserRequest) error
-	GetUserByUsername(ctx context.Context, username string) (*models.User, error)
-	GetUserByEmail(ctx context.Context, email string) (*models.User, error)
-	UpdateUser(ctx context.Context, id uuid.UUID, user *models.UserRequest) error
+	CreateUser(ctx context.Context, user *userModel.UserRequest) error
+	GetUserByUsername(ctx context.Context, username string) (*userModel.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*userModel.User, error)
+	UpdateUser(ctx context.Context, id uuid.UUID, user *userModel.UserRequest) error
 	DeleteUser(ctx context.Context, id uuid.UUID) error
 }
 
@@ -25,7 +25,7 @@ func NewUserRepository(db *sql.DB) UserRepository {
 	return &userRepo{db: db}
 }
 
-func (repo *userRepo) CreateUser(ctx context.Context, user *models.UserRequest) error {
+func (repo *userRepo) CreateUser(ctx context.Context, user *userModel.UserRequest) error {
 	query := `
 		INSERT INTO users (username, email, password)
 		VALUES ($1, $2, $3)
@@ -35,12 +35,12 @@ func (repo *userRepo) CreateUser(ctx context.Context, user *models.UserRequest) 
 	return err
 }
 
-func (repo *userRepo) GetUserByUsername(ctx context.Context, username string) (*models.User, error) {
+func (repo *userRepo) GetUserByUsername(ctx context.Context, username string) (*userModel.User, error) {
 	query := `
 		SELECT id, username, email, password, created_at, updated_at
 		FROM users WHERE username = $1
 	`
-	var user models.User
+	var user userModel.User
 	err := repo.db.QueryRowContext(ctx, query, username).Scan(
 		&user.ID,
 		&user.Username,
@@ -58,12 +58,12 @@ func (repo *userRepo) GetUserByUsername(ctx context.Context, username string) (*
 	return &user, nil
 }
 
-func (repo *userRepo) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+func (repo *userRepo) GetUserByEmail(ctx context.Context, email string) (*userModel.User, error) {
 	query := `
 		SELECT id, username, email, password, created_at, updated_at
 		FROM users WHERE email = $1
 	`
-	var user models.User
+	var user userModel.User
 	err := repo.db.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
 		&user.Username,
@@ -81,7 +81,7 @@ func (repo *userRepo) GetUserByEmail(ctx context.Context, email string) (*models
 	return &user, nil
 }
 
-func (repo *userRepo) UpdateUser(ctx context.Context, id uuid.UUID, user *models.UserRequest) error {
+func (repo *userRepo) UpdateUser(ctx context.Context, id uuid.UUID, user *userModel.UserRequest) error {
 	query := `
 		UPDATE users
 		SET username = $1, email = $2, password = $3
