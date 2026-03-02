@@ -11,10 +11,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func ConfigureJWTMiddleware() fiber.Handler {
+func Middleware() fiber.Handler {
 	return jwtware.New(jwtware.Config{
 		SigningKey:   jwtware.SigningKey{Key: []byte(os.Getenv("JWT_KEY"))},
-		Extractor:    extractors.FromAuthHeader("Bearer"),
+		Extractor:    extractors.Chain(extractors.FromCookie("uusr"), extractors.FromAuthHeader("Bearer")),
 		ErrorHandler: jwtError,
 	})
 }

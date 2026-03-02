@@ -16,7 +16,7 @@ func ConfigureRoutes(app *fiber.App, db *sql.DB) {
 	authrouter.ConfigureAuthRoutes(auth, db)
 
 	// Configure JWT middleware here
-	app.Use(jwt.ConfigureJWTMiddleware())
+	app.Use(jwt.Middleware())
 
 	// Test JWT middleware restriction without Authorization Header
 	auth.Get("/restricted", func(c fiber.Ctx) error {
