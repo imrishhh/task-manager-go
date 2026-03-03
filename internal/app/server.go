@@ -28,7 +28,8 @@ func (s *Server) StartServer() {
 	}
 
 	app := fiber.New(fiber.Config{
-		AppName: "Task Manager Go",
+		AppName:     "Task Manager Go",
+		ProxyHeader: fiber.HeaderXForwardedFor,
 	})
 
 	app.Get("/", func(c fiber.Ctx) error {
@@ -56,5 +57,17 @@ func (s *Server) StartServer() {
 	log.Printf("Prefork: %v\n", listenConfig.EnablePrefork)
 	log.Printf("PID: %d\n", os.Getpid())
 
-	log.Fatal(app.Listen(addr, listenConfig))
+	log.Println(app.Listen(addr, listenConfig).Error())
+
+	if err := app.Shutdown(); err != nil {
+		log.Println("❌ Failed to shutdown app:", err.Error())
+	} else {
+		log.Println("✅ Successfully shutdowned fiber app.")
+	}
+
+	if err := db.Close(); err != nil {
+		log.Println("❌ Failed to close database:", err.Error())
+	} else {
+		log.Println("✅ Successfully closed database pool.")
+	}
 }

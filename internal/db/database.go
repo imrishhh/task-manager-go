@@ -10,11 +10,14 @@ import (
 
 func InitializeDatabase(connString string) *sql.DB {
 	log.Println("🗄 Opening database")
-	conn, err := sql.Open("pgx", connString)
+	db, err := sql.Open("pgx", connString)
 	if err != nil {
 		log.Fatal("❌ Failed to initialize database:", err.Error())
 	}
+	if err := db.Ping(); err != nil {
+		log.Fatal("❌ Failed to open database:", err.Error())
+	}
 	log.Println("✅ Successfully opened database!")
 	fmt.Println()
-	return conn
+	return db
 }
