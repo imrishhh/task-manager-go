@@ -32,8 +32,8 @@ func (s *Server) StartServer() {
 		ProxyHeader: fiber.HeaderXForwardedFor,
 	})
 
-	app.Get("/", func(c fiber.Ctx) error {
-		return c.SendString("Khello World!")
+	app.All("/", func(c fiber.Ctx) error {
+		return c.SendString("Welcome to task manager api!")
 	})
 
 	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
