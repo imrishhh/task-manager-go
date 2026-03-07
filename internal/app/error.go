@@ -1,4 +1,4 @@
-package config
+package app
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ import (
 	"github.com/nullrish/task-manager-go/internal/model"
 )
 
-func ErrorHandler(c fiber.Ctx, err error) error {
+func errorHandler(c fiber.Ctx, err error) error {
 	var (
 		database   *apperr.DatabaseError
 		business   *apperr.BusinessError

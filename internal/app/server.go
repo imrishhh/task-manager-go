@@ -28,8 +28,9 @@ func (s *Server) StartServer() {
 	}
 
 	app := fiber.New(fiber.Config{
-		AppName:     "Task Manager Go",
-		ProxyHeader: fiber.HeaderXForwardedFor,
+		AppName:      "Task Manager Go",
+		ProxyHeader:  fiber.HeaderXForwardedFor,
+		ErrorHandler: errorHandler,
 	})
 
 	app.All("/", func(c fiber.Ctx) error {
