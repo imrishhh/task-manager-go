@@ -30,14 +30,15 @@ func NewTaskRepository(db *sql.DB) TaskRepository {
 
 func (r *taskRepo) CreateTask(ctx context.Context, req *model.TaskRequest) (*model.Task, error) {
 	query := `
-		INSERT INTO tasks (task_title, task_description, user_id) VALUES ($1, $2, $3)
-		RETURNING id, task_title, task_description, created_at, updated_at, user_id;
+		INSERT INTO tasks (task_title, task_description, status, user_id) VALUES ($1, $2, $3, $4)
+		RETURNING id, task_title, task_description, status, created_at, updated_at, user_id;
 	`
 	var task model.Task
-	err := r.db.QueryRowContext(ctx, query, req.TaskTitle, req.TaskDescription, req.UserID).Scan(
+	err := r.db.QueryRowContext(ctx, query, req.TaskTitle, req.TaskDescription, req.Status, req.UserID).Scan(
 		&task.ID,
 		&task.TaskTitle,
 		&task.TaskDescription,
+		&task.Status,
 		&task.CreatedAt,
 		&task.UpdatedAt,
 		&task.UserID,
@@ -51,7 +52,7 @@ func (r *taskRepo) CreateTask(ctx context.Context, req *model.TaskRequest) (*mod
 
 func (r *taskRepo) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*model.Task, error) {
 	query := `
-		SELECT id, task_title, task_description, created_at, updated_at, user_id FROM tasks
+		SELECT id, task_title, task_description, status, created_at, updated_at, user_id FROM tasks
 		WHERE id = $1
 	`
 	var task model.Task
@@ -59,6 +60,7 @@ func (r *taskRepo) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*model.Ta
 		&task.ID,
 		&task.TaskTitle,
 		&task.TaskDescription,
+		&task.Status,
 		&task.CreatedAt,
 		&task.UpdatedAt,
 		&task.UserID)
@@ -74,7 +76,7 @@ func (r *taskRepo) GetTaskByID(ctx context.Context, taskID uuid.UUID) (*model.Ta
 
 func (r *taskRepo) GetTasksByUserID(ctx context.Context, userID uuid.UUID) ([]model.Task, error) {
 	query := `
-		SELECT id, task_title, task_description, created_at, updated_at, user_id FROM tasks
+		SELECT id, task_title, task_description, status, created_at, updated_at, user_id FROM tasks
 		WHERE user_id = $1
 	`
 	rows, err := r.db.QueryContext(ctx, query, userID)
@@ -108,7 +110,7 @@ func (r *taskRepo) GetTasksByUserID(ctx context.Context, userID uuid.UUID) ([]mo
 
 func (r *taskRepo) GetTasks(ctx context.Context) ([]model.Task, error) {
 	query := `
-		SELECT id, task_title, task_description, created_at, updated_at, user_id FROM tasks;
+		SELECT id, task_title, task_description, status, created_at, updated_at, user_id FROM tasks;
 	`
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
@@ -138,19 +140,21 @@ func (r *taskRepo) GetTasks(ctx context.Context) ([]model.Task, error) {
 
 func (r *taskRepo) UpdateTask(ctx context.Context, req *model.TaskRequest) (*model.Task, error) {
 	query := `
-		UPDATE tasks SET task_title = $1, task_description = $2, user_id = $3 WHERE id = $4
-		RETURNING id, task_title, task_description, created_at, updated_at, user_id;
+		UPDATE tasks SET task_title = $1, task_description = $2, user_id = $3, status = $4 WHERE id = $5
+		RETURNING id, task_title, task_description, status, created_at, updated_at, user_id;
 	`
 	var task model.Task
 	err := r.db.QueryRowContext(ctx, query,
-		task.TaskTitle,
-		task.TaskDescription,
-		task.UserID,
-		task.ID,
+		req.TaskTitle,
+		req.TaskDescription,
+		req.UserID,
+		req.Status,
+		req.ID,
 	).Scan(
 		&task.ID,
 		&task.TaskTitle,
 		&task.TaskDescription,
+		&task.Status,
 		&task.CreatedAt,
 		&task.UpdatedAt,
 		&task.UserID,

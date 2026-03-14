@@ -6,6 +6,7 @@ import (
 	apperr "github.com/nullrish/task-manager-go/internal/errors"
 	"github.com/nullrish/task-manager-go/internal/model"
 	"github.com/nullrish/task-manager-go/internal/service"
+	"github.com/nullrish/task-manager-go/internal/util/validator"
 )
 
 type TaskHandler struct {
@@ -16,7 +17,7 @@ func NewTaskHandler(s *service.TaskService) *TaskHandler {
 	return &TaskHandler{s}
 }
 
-func (h *TaskHandler) CreateUser(c fiber.Ctx) error {
+func (h *TaskHandler) CreateTask(c fiber.Ctx) error {
 	req := &model.TaskRequest{}
 	if err := c.Bind().Body(req); err != nil {
 		return &apperr.ValidationError{Message: "Invalid input"}
@@ -24,6 +25,10 @@ func (h *TaskHandler) CreateUser(c fiber.Ctx) error {
 
 	if req.TaskTitle == "" {
 		return &apperr.ValidationError{Field: "task_title", Message: "please enter task title"}
+	}
+
+	if !validator.ValidateStatus(req.Status) {
+		return &apperr.ValidationError{Field: "status", Message: "invalid status value"}
 	}
 
 	task, err := h.service.CreateTask(c.Context(), req)
@@ -81,6 +86,10 @@ func (h *TaskHandler) UpdateTask(c fiber.Ctx) error {
 	req := &model.TaskRequest{}
 	if err := c.Bind().Body(req); err != nil {
 		return &apperr.ValidationError{Message: "invalid input"}
+	}
+
+	if !validator.ValidateStatus(req.Status) {
+		return &apperr.ValidationError{Field: "status", Message: "invalid status value"}
 	}
 
 	task, err := h.service.UpdateTask(c.Context(), req)

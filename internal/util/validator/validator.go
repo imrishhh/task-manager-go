@@ -72,3 +72,10 @@ func ValidatePassword(p string) bool {
 
 	return hasLower && hasUpper && hasNumber && hasSpecial
 }
+
+func ValidateStatus(s string) bool {
+	if s == "pending" || s == "active" || s == "completed" {
+		return true
+	}
+	return false
+}
