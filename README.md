@@ -10,8 +10,10 @@ and Go language itself.
 
 This project is based on RESTful API:
 
-### END POINTS:
+### END POINTS
+
 **Auth End Points**
+
 | METHOD | END POINTS | USE CASE |
 | ------ | ---------- | -------  |
 | POST   | /api/auth/register | To register user |
@@ -19,6 +21,7 @@ This project is based on RESTful API:
 | POST   | /api/auth/refresh  | For generating refresh token |
 
 **Tasks End Points**
+
 | METHOD | END POINTS | USE CASE |
 | ------ | --------   | -------- |
 | POST   | /api/task/create | Create a task |
