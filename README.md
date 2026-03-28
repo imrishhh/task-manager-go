@@ -51,13 +51,17 @@ JWT_KEY=YOUR_JWT_KEY
 **Migration**
 
 ```bash
-go run migration.go```
+go run migration.go
+```
 
 **Running the project**
 
 ```bash
-go run main.go```
+go run main.go
+```
 
 **Building the project**
+
 ```bash
-go build -o taskmanager .```
+go build -o taskmanager .
+```
