@@ -47,7 +47,45 @@ func main() {
 		if err := goose.Down(db, "./migrations"); err != nil {
 			log.Fatal(err)
 		}
+	case "test":
+		if err := configureTestDB(); err != nil {
+			log.Fatal(err)
+		}
 	default:
 		log.Fatalf("Unknown command: %s (up or down)", cmd)
 	}
+}
+
+func configureTestDB() error {
+	cmd := "up"
+
+	if len(os.Args) >= 3 {
+		cmd = strings.ToLower(os.Args[2])
+	}
+
+	testConn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+		os.Getenv("TEST_DB_USER"),
+		os.Getenv("TEST_DB_PASSWORD"),
+		os.Getenv("TEST_DB_HOST"),
+		os.Getenv("TEST_DB_PORT"),
+		os.Getenv("TEST_DB_NAME"))
+
+	db, err := sql.Open("pgx", testConn)
+	if err != nil {
+		return err
+	}
+
+	switch cmd {
+	case "up":
+		if err := goose.Up(db, "./migrations"); err != nil {
+			return err
+		}
+	case "down":
+		if err := goose.Down(db, "./migrations"); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unknown test migration cmd: %s (up or down)", cmd)
+	}
+	return nil
 }
