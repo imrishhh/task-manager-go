@@ -57,3 +57,11 @@ type InternalServerError struct {
 func (e *InternalServerError) Error() string {
 	return fmt.Sprintf("internal server error: %s", e.Message)
 }
+
+type AuthenticationError struct {
+	Message string
+}
+
+func (e *AuthenticationError) Error() string {
+	return fmt.Sprintf("authentication error: %s", e.Message)
+}

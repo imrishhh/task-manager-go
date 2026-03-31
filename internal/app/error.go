@@ -19,6 +19,7 @@ func errorHandler(c fiber.Ctx, err error) error {
 		validation     *apperr.ValidationError
 		unknown        *apperr.UnknownError
 		internalServer *apperr.InternalServerError
+		authentication *apperr.AuthenticationError
 	)
 	switch {
 	case errors.As(err, &database):
@@ -55,6 +56,11 @@ func errorHandler(c fiber.Ctx, err error) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(&model.Response{
 			Message: "Something went wrong!",
 			Error:   fmt.Errorf("unknown Error"),
+		})
+	case errors.As(err, &authentication):
+		return c.Status(fiber.StatusBadRequest).JSON(&model.Response{
+			Message: "Invalid username or password",
+			Error:   err,
 		})
 	default:
 		return c.Status(fiber.StatusInternalServerError).JSON(&model.Response{

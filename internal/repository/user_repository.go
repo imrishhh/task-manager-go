@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 
 	"github.com/google/uuid"
@@ -34,26 +35,32 @@ func (r *userRepo) CreateUser(ctx context.Context, req *model.UserRequest) (*mod
 		RETURNING id, username, email, password, created_at, updated_at;
 	`
 	var user model.User
-	err := r.db.QueryRowContext(ctx, query, user.Username, user.Email, user.Password).Scan(
+	err := r.db.QueryRowContext(ctx, query, req.Username, req.Email, req.Password).Scan(
 		&user.ID,
+		&user.Username,
 		&user.Email,
 		&user.Password,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
 	if err != nil {
-		if pgErr, ok := err.(*pgconn.PgError); ok {
-			if pgErr.Code == "23505" {
-				switch pgErr.ConstraintName {
-				case "users_username_key":
-					return nil, &apperr.ConflictError{Message: "username already exists"}
-				case "users_email_key":
-					return nil, &apperr.ConflictError{Message: "email already exists"}
-				case "users_pkey":
-					return nil, &apperr.ConflictError{Message: "user already exist"}
-				default:
-					return nil, &apperr.ConflictError{Message: "duplicate input field"}
-				}
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			log.Printf("(user_repository) - [CreateUser] failed! code=%s constraint=%s detail=%s table=%s",
+				pgErr.Code,
+				pgErr.ConstraintName,
+				pgErr.Detail,
+				pgErr.TableName,
+			)
+			switch pgErr.ConstraintName {
+			case "users_username_key":
+				return nil, &apperr.ConflictError{Message: "username already exists"}
+			case "users_email_key":
+				return nil, &apperr.ConflictError{Message: "email already exists"}
+			case "users_pkey":
+				return nil, &apperr.ConflictError{Message: "user already exist"}
+			default:
+				return nil, &apperr.ConflictError{Message: "duplicate input field"}
 			}
 		}
 		log.Printf("(user_repository) - [CreateUser] failed to create user %s: %v", req.Username, err)

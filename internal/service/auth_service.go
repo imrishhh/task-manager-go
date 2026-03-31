@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/google/uuid"
 	apperr "github.com/nullrish/task-manager-go/internal/errors"
@@ -40,7 +41,7 @@ func (s *AuthService) RegisterUser(ctx context.Context, req *model.UserRequest) 
 	var err error
 	req.Password, err = hashing.HashPassword(req.Password)
 	if err != nil {
-		return nil, &apperr.UnknownError{}
+		return nil, &apperr.InternalServerError{Message: "failed to hash password"}
 	}
 	return s.repo.CreateUser(ctx, req)
 }
@@ -48,14 +49,17 @@ func (s *AuthService) RegisterUser(ctx context.Context, req *model.UserRequest) 
 func (s *AuthService) LoginUser(ctx context.Context, req *model.UserRequest) (*model.UserLoginResponse, error) {
 	// If fields are empty then return error of missing field
 	var user *model.User
+	var field string
 	var err error
 	if req.Email != "" {
 		user, err = s.repo.GetUserByEmail(ctx, req.Email)
+		field = "email"
 		if user == nil {
 			return nil, err
 		}
 	} else {
 		user, err = s.repo.GetUserByUsername(ctx, req.Username)
+		field = "username"
 		if user == nil {
 			return nil, err
 		}
@@ -64,7 +68,7 @@ func (s *AuthService) LoginUser(ctx context.Context, req *model.UserRequest) (*m
 	if matched {
 		token, err := middleware.GenerateNewUserToken(user.ID)
 		if err != nil {
-			return nil, &apperr.UnknownError{}
+			return nil, &apperr.InternalServerError{Message: "failed to generate login token"}
 		}
 		return &model.UserLoginResponse{
 			User:  user,
@@ -72,14 +76,15 @@ func (s *AuthService) LoginUser(ctx context.Context, req *model.UserRequest) (*m
 		}, nil
 
 	} else {
-		return nil, &apperr.UnknownError{}
+		message := fmt.Sprintf("Invalid %s or password", field)
+		return nil, &apperr.AuthenticationError{Message: message}
 	}
 }
 
 func (s *AuthService) GenerateRefreshToken(ctx context.Context, userID uuid.UUID) (string, error) {
 	token, err := middleware.GenerateNewUserToken(userID)
 	if err != nil {
-		return "", &apperr.UnknownError{}
+		return "", &apperr.InternalServerError{Message: "failed to generate login token"}
 	}
 	return token, nil
 }
