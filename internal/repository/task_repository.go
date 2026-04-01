@@ -99,7 +99,7 @@ func (r *taskRepo) GetTasksByUserID(ctx context.Context, userID uuid.UUID) ([]mo
 	for rows.Next() {
 		var t model.Task
 		// Following go idiom to handle errors
-		if err := rows.Scan(&t.ID, &t.TaskTitle, &t.TaskDescription, &t.CreatedAt, &t.UpdatedAt, &t.UserID); err != nil {
+		if err := rows.Scan(&t.ID, &t.TaskTitle, &t.TaskDescription, &t.Status, &t.CreatedAt, &t.UpdatedAt, &t.UserID); err != nil {
 			log.Printf("(task_repository) - [GetTasksByUserID] Cannot scan the row: %v", err)
 			continue
 		}
@@ -129,7 +129,7 @@ func (r *taskRepo) GetTasks(ctx context.Context) ([]model.Task, error) {
 	var tasks []model.Task
 	for rows.Next() {
 		var t model.Task
-		if err := rows.Scan(&t.ID, &t.TaskTitle, &t.TaskDescription, &t.CreatedAt, &t.UpdatedAt, &t.UserID); err != nil {
+		if err := rows.Scan(&t.ID, &t.TaskTitle, &t.TaskDescription, &t.Status, &t.CreatedAt, &t.UpdatedAt, &t.UserID); err != nil {
 			log.Printf("(task_repository) - [GetTasks] Cannot scan the row: %v", err)
 			continue
 		}
