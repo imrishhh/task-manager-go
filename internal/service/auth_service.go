@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	apperr "github.com/nullrish/task-manager-go/internal/errors"
@@ -13,11 +14,12 @@ import (
 )
 
 type AuthService struct {
-	repo repository.UserRepository
+	userRepo  repository.UserRepository
+	tokenRepo repository.TokenRepository
 }
 
-func NewAuthService(repo repository.UserRepository) *AuthService {
-	return &AuthService{repo}
+func NewAuthService(userRepo repository.UserRepository, tokenRepo repository.TokenRepository) *AuthService {
+	return &AuthService{userRepo, tokenRepo}
 }
 
 func (s *AuthService) RegisterUser(ctx context.Context, req *model.UserRequest) (*model.User, error) {
@@ -43,7 +45,7 @@ func (s *AuthService) RegisterUser(ctx context.Context, req *model.UserRequest) 
 	if err != nil {
 		return nil, &apperr.InternalServerError{Message: "failed to hash password"}
 	}
-	return s.repo.CreateUser(ctx, req)
+	return s.userRepo.CreateUser(ctx, req)
 }
 
 func (s *AuthService) LoginUser(ctx context.Context, req *model.UserRequest) (*model.UserLoginResponse, error) {
@@ -52,13 +54,13 @@ func (s *AuthService) LoginUser(ctx context.Context, req *model.UserRequest) (*m
 	var field string
 	var err error
 	if req.Email != "" {
-		user, err = s.repo.GetUserByEmail(ctx, req.Email)
+		user, err = s.userRepo.GetUserByEmail(ctx, req.Email)
 		field = "email"
 		if user == nil {
 			return nil, err
 		}
 	} else {
-		user, err = s.repo.GetUserByUsername(ctx, req.Username)
+		user, err = s.userRepo.GetUserByUsername(ctx, req.Username)
 		field = "username"
 		if user == nil {
 			return nil, err
@@ -66,10 +68,11 @@ func (s *AuthService) LoginUser(ctx context.Context, req *model.UserRequest) (*m
 	}
 	matched := hashing.CheckHashedPassword(req.Password, user.Password)
 	if matched {
-		token, err := middleware.GenerateNewUserToken(user.ID)
+		token, err := middleware.GenerateNewUserToken(user.ID, "refresh")
 		if err != nil {
 			return nil, &apperr.InternalServerError{Message: "failed to generate login token"}
 		}
+		s.tokenRepo.Store(ctx, user.ID, token, "refresh", time.Now().Add(time.Hour*72))
 		return &model.UserLoginResponse{
 			User:  user,
 			Token: token,
@@ -82,9 +85,10 @@ func (s *AuthService) LoginUser(ctx context.Context, req *model.UserRequest) (*m
 }
 
 func (s *AuthService) GenerateRefreshToken(ctx context.Context, userID uuid.UUID) (string, error) {
-	token, err := middleware.GenerateNewUserToken(userID)
+	token, err := middleware.GenerateNewUserToken(userID, "refresh")
 	if err != nil {
 		return "", &apperr.InternalServerError{Message: "failed to generate login token"}
 	}
+	s.tokenRepo.Store(ctx, userID, token, "refresh", time.Now().Add(time.Hour*72))
 	return token, nil
 }

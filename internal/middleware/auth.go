@@ -19,10 +19,16 @@ func AuthMiddleware() fiber.Handler {
 	})
 }
 
-func GenerateNewUserToken(userID uuid.UUID) (string, error) {
+func GenerateNewUserToken(userID uuid.UUID, tokenType string) (string, error) {
+	var expiry int64
+	if tokenType == "refresh" {
+		expiry = time.Now().Add(time.Hour * 72).Unix()
+	} else {
+		expiry = time.Now().Add(time.Minute * 30).Unix()
+	}
 	claims := jwt.MapClaims{
 		"id":  userID.String(),
-		"exp": time.Now().Add(time.Hour * 72).Unix(),
+		"exp": expiry,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
