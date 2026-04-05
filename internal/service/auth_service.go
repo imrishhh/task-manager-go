@@ -92,3 +92,14 @@ func (s *AuthService) GenerateRefreshToken(ctx context.Context, userID uuid.UUID
 	s.tokenRepo.Store(ctx, userID, token, "refresh", time.Now().Add(time.Hour*72))
 	return token, nil
 }
+
+func (s *AuthService) VerifyUser(ctx context.Context, userID uuid.UUID, token model.TokenType) error {
+	if token != model.Verify {
+		return &apperr.ValidationError{Field: "tokenType", Message: "Invalid token type"}
+	}
+	err := s.userRepo.VerifyUser(ctx, userID)
+	if err != nil {
+		return err
+	}
+	return nil
+}

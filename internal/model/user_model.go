@@ -9,6 +9,7 @@ type User struct {
 	Username  string    `json:"username" db:"username"`
 	Email     string    `json:"email" db:"email"`
 	Password  string    `json:"-" db:"password"`
+	Verified  bool      `json:"verified" db:"verified"`
 	CreatedAt string    `json:"created_at" db:"created_at"`
 	UpdatedAt string    `json:"updated_at" db:"updated_at"`
 }

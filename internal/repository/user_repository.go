@@ -18,6 +18,7 @@ type UserRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 	UpdateUser(ctx context.Context, userID uuid.UUID, req *model.UserRequest) (*model.User, error)
 	DeleteUser(ctx context.Context, userID uuid.UUID) error
+	VerifyUser(ctx context.Context, userID uuid.UUID) error
 }
 
 type userRepo struct {
@@ -32,7 +33,7 @@ func (r *userRepo) CreateUser(ctx context.Context, req *model.UserRequest) (*mod
 	query := `
 		INSERT INTO users (username, email, password)
 		VALUES ($1, $2, $3)
-		RETURNING id, username, email, password, created_at, updated_at;
+		RETURNING id, username, email, password, created_at, updated_at, verified;
 	`
 	var user model.User
 	err := r.db.QueryRowContext(ctx, query, req.Username, req.Email, req.Password).Scan(
@@ -42,6 +43,7 @@ func (r *userRepo) CreateUser(ctx context.Context, req *model.UserRequest) (*mod
 		&user.Password,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.Verified,
 	)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -71,7 +73,7 @@ func (r *userRepo) CreateUser(ctx context.Context, req *model.UserRequest) (*mod
 
 func (r *userRepo) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
 	query := `
-		SELECT id, username, email, password, created_at, updated_at
+		SELECT id, username, email, password, created_at, updated_at, verified
 		FROM users WHERE username = $1
 	`
 	var user model.User
@@ -82,6 +84,7 @@ func (r *userRepo) GetUserByUsername(ctx context.Context, username string) (*mod
 		&user.Password,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.Verified,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -95,7 +98,7 @@ func (r *userRepo) GetUserByUsername(ctx context.Context, username string) (*mod
 
 func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
 	query := `
-		SELECT id, username, email, password, created_at, updated_at
+		SELECT id, username, email, password, created_at, updated_at, verified
 		FROM users WHERE email = $1
 	`
 	var user model.User
@@ -106,6 +109,7 @@ func (r *userRepo) GetUserByEmail(ctx context.Context, email string) (*model.Use
 		&user.Password,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.Verified,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -122,7 +126,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, userID uuid.UUID, req *model.
 		UPDATE users
 		SET username = $1, email = $2, password = $3
 		WHERE id = $4
-		RETURNING id, username, email, password, created_at, updated_at;
+		RETURNING id, username, email, password, created_at, updated_at, verified;
 	`
 
 	var user model.User
@@ -133,6 +137,7 @@ func (r *userRepo) UpdateUser(ctx context.Context, userID uuid.UUID, req *model.
 		&user.Password,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.Verified,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -142,6 +147,33 @@ func (r *userRepo) UpdateUser(ctx context.Context, userID uuid.UUID, req *model.
 		return nil, &apperr.DatabaseError{Message: err.Error()}
 	}
 	return &user, nil
+}
+
+func (r *userRepo) VerifyUser(ctx context.Context, userID uuid.UUID) error {
+	query := `
+		UPDATE users
+		SET verified = true
+		WHERE id = $1
+		RETURNING id, username, email, password, created_at, updated_at, verified
+	`
+	var user model.User
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Password,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+		&user.Verified,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &apperr.NotFoundError{Resource: "user", ID: userID.String()}
+		}
+		log.Printf("(user_repository) - [VerifyUser] failed to verify user %s: %v", userID, err)
+		return &apperr.DatabaseError{Message: err.Error()}
+	}
+	return nil
 }
 
 func (r *userRepo) DeleteUser(ctx context.Context, userID uuid.UUID) error {
